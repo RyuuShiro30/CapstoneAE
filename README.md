@@ -8,7 +8,7 @@ Calon pembeli sering perlu menghubungi pengelola untuk mengetahui produk, harga,
 
 ## Foundation Status
 
-- FastAPI mengarahkan request ke layanan chatbot dengan classifier berbasis aturan, pemeriksaan permintaan sensitif, jawaban Bahasa Indonesia, dan handoff WhatsApp.
+- FastAPI mengarahkan request ke layanan chatbot dengan classifier berbasis aturan, preprocessing bahasa kasual, pemeriksaan permintaan sensitif, jawaban Bahasa Indonesia, dan handoff WhatsApp.
 - Produk yang terverifikasi adalah gurame konsumsi berukuran besar, dijual per kilogram. Harga, stok, ongkir, jam operasional, alamat, promosi, dan ketentuan terkini memerlukan sumber yang disetujui. Jalur pemesanan meminta pelanggan mengonfirmasi jumlah dan opsi COD atau ambil langsung dengan pengelola.
 - Classifier, katalog, retrieval, dan provider dapat dipasang melalui dependency injection. Default berjalan tanpa kredensial eksternal. Histori, model terlatih, katalog aktual, provider proprietary dan RAG aktif masuk tahap berikutnya.
 
@@ -22,6 +22,7 @@ Python 3.11+, FastAPI, Pydantic, Uvicorn, pytest, dan scikit-learn untuk evaluas
 app/
   main.py                   Application composition and health check
   schemas.py                Existing request and response schemas
+  preprocessing.py          Shared Indonesian slang and unit normalization
   routers/chat.py           HTTP adapter
   core/config.py            Environment settings
   services/chat_service.py  Intent routing, response and handoff
@@ -81,7 +82,7 @@ Gunakan split CSV UTF-8 berkolom `text,intent` setelah data dan label ditinjau o
 .\.venv\Scripts\python.exe -m scripts.evaluate_intent --train data/raw/train.csv --test data/raw/test.csv
 ~~~
 
-Runner menolak pesan yang duplikat setelah normalisasi dan menghitung distribusi kelas. TF-IDF + Logistic Regression dan TF-IDF + Linear SVM dilatih pada train saja dan memakai holdout yang sama. Output berisi akurasi, precision, recall, F1, confusion matrix, dan rata-rata waktu inferensi. Metrik utama yang diusulkan adalah macro F1, dengan kesalahan per kelas, latensi, dan kompleksitas sebagai pertimbangan. Hasil resmi dan pemilihan model menunggu data tim.
+Runner memeriksa duplikat dengan `clean_text`, fungsi yang sama untuk classifier berbasis aturan dan fitur TF-IDF. Runner menerima label sementara `lainnya` dari dataset tim untuk evaluasi offline. TF-IDF + Logistic Regression dan TF-IDF + Linear SVM dilatih pada train saja dan memakai holdout yang sama. Output memuat distribusi kelas, akurasi, precision, recall, F1, confusion matrix, dan rata-rata waktu inferensi. Metrik utama yang diusulkan adalah macro F1, dengan kesalahan per kelas, latensi, dan kompleksitas sebagai pertimbangan. Hasil resmi dan pemilihan model menunggu dataset final.
 
 ## Data and Resource Attribution
 
@@ -90,7 +91,8 @@ Runner menolak pesan yang duplikat setelah normalisasi dan menghitung distribusi
 | Interview dan Use Case UMKM, A26-CS181. Dokumen tim, 23 Oktober 2026. | Sumber primer kebutuhan bisnis dan batas Click-to-Chat. Harga historis dan data kontak internal dikecualikan dari jawaban dan file repo. |
 | Checklist Tech Stack Asah 2026, kolom Gen AI, hlm. 1–2. | Acuan penilaian Main Quest dan Side Quest. |
 | [Foundation case dataset](evaluations/datasets/foundation_cases.csv) | Contoh sintetis untuk pengujian perilaku dan guardrail. Dataset ini dibatasi untuk pengujian fondasi. |
-| Dataset Data Science dan katalog Full-stack | Menunggu penyerahan data dan kontrak. |
+| [Dataset sementara tim](app/Data/sample_intents.csv) | 24 contoh dengan empat label, termasuk `lainnya`, dari pembaruan preprocessing. Dipakai untuk memeriksa alur teknis. Label final, sumber dan split resmi perlu dikonfirmasi dengan Data Science. |
+| Dataset final Data Science dan katalog Full-stack | Menunggu penyerahan data dan kontrak. |
 | Runtime | API, validasi, dan serving ASGI. [FastAPI](https://fastapi.tiangolo.com/), [Pydantic](https://docs.pydantic.dev/), [Uvicorn](https://www.uvicorn.org/) |
 | Tooling | Evaluasi, komunikasi HTTP in-process, pengujian async, lint, dan format. [scikit-learn](https://scikit-learn.org/stable/), [HTTPX](https://www.python-httpx.org/), [AnyIO](https://anyio.readthedocs.io/), [pytest](https://docs.pytest.org/), [Ruff](https://docs.astral.sh/ruff/) |
 
@@ -100,7 +102,7 @@ Runner menolak pesan yang duplikat setelah normalisasi dan menghitung distribusi
 | --- | --- | --- |
 | MQ-01 Problem definition | DONE | Masalah, pengguna, tujuan model, dan manfaat tercatat di README. |
 | MQ-02 Dedicated AI model | BLOCKED | Kontrak classifier dan fallback tersedia. Pelatihan menunggu data dan label dari Data Science. |
-| MQ-03 Data preprocessing | PARTIAL | Normalisasi dan pipeline TF-IDF tersedia. Verifikasi pada data proyek belum dilakukan. |
+| MQ-03 Data preprocessing | PARTIAL | Preprocessing bersama dipakai pada routing dan pipeline TF-IDF. Tes tim lulus. Validasi pada dataset final masih diperlukan. |
 | MQ-04 Attribution | DONE | Sumber, jenis data, dan batas penggunaan tahap ini didokumentasikan. |
 | MQ-05 Proprietary model API | SCAFFOLDED | Kontrak provider dan guardrail diuji lewat mock. Menunggu vendor, kebijakan data, dan kredensial. |
 | MQ-06 Model comparison | SCAFFOLDED | Runner dua model tersedia. Hasil resmi dan pemilihan model menunggu dataset. |

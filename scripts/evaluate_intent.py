@@ -8,14 +8,15 @@ from pathlib import Path
 from time import perf_counter
 
 from app.ai.intent import Intent
-from app.ai.text import normalize_message
+from app.preprocessing import clean_text
 
 LabeledMessage = tuple[str, str]
+# The team's temporary dataset uses this offline label for mixed cases.
+EVALUATION_LABELS = {intent.value for intent in Intent} | {"lainnya"}
 
 
 def _read_split(path: Path) -> dict[str, LabeledMessage]:
     rows: dict[str, LabeledMessage] = {}
-    valid_intents = {intent.value for intent in Intent}
     with path.open(encoding="utf-8-sig", newline="") as stream:
         reader = csv.DictReader(stream)
         if not {"text", "intent"} <= set(reader.fieldnames or ()):
@@ -23,8 +24,8 @@ def _read_split(path: Path) -> dict[str, LabeledMessage]:
         for line, row in enumerate(reader, start=2):
             message = row.get("text") or ""
             label = (row.get("intent") or "").strip()
-            normalized = normalize_message(message)
-            if not normalized or label not in valid_intents:
+            normalized = clean_text(message)
+            if not normalized or label not in EVALUATION_LABELS:
                 raise ValueError(
                     f"{path.name}:{line} contains an empty message or unknown intent."
                 )
@@ -70,7 +71,7 @@ def compare_models(
     scores = {}
     for name, classifier in candidates.items():
         pipeline = make_pipeline(
-            TfidfVectorizer(preprocessor=normalize_message, ngram_range=(1, 2)),
+            TfidfVectorizer(preprocessor=clean_text, ngram_range=(1, 2)),
             classifier,
         )
         pipeline.fit(train_messages, train_intents)

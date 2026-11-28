@@ -41,6 +41,8 @@ async def test_health_and_openapi(client):
         ("Ada ikan gurame?", "tanya_produk", False),
         ("Mau beli gurame", "pemesanan", True),
         ("Komplain pesanan", "keluhan", True),
+        ("Mau psn 2kg", "pemesanan", True),
+        ("Komplen pesanan", "keluhan", True),
     ],
 )
 async def test_successful_chat_matches_legacy_contract(
@@ -96,6 +98,10 @@ async def test_malformed_json_returns_bad_request(client):
         ("Masih ada stok gurami?", "belum bisa memastikan stok", True),
         ("Berapa ongkir gurame?", "dikonfirmasi langsung", True),
         ("Berapa harga saham hari ini?", "hanya bisa membantu", False),
+        ("Brp hrg min?", "belum bisa memastikan harga", True),
+        ("Masih ready gak, min?", "belum bisa memastikan stok", True),
+        ("Almt kolam Mang Ujang dmn?", "dikonfirmasi langsung", True),
+        ("Brp hrg laptop min?", "hanya bisa membantu", False),
     ],
 )
 async def test_chat_fallback_is_safe_and_compatible(

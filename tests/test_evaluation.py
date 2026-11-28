@@ -37,3 +37,22 @@ def test_model_evaluation_loads_distinct_valid_splits(tmp_path):
     write_split(train, train_rows)
     write_split(test, test_rows)
     assert load_intent_splits(train, test) == (train_rows, test_rows)
+
+
+def test_model_evaluation_rejects_overlap_from_slang_and_unit_normalization(tmp_path):
+    train, test = tmp_path / "train.csv", tmp_path / "test.csv"
+    write_split(train, [("Mau psn 1kg min", "pemesanan"), ("Halo", "sapaan")])
+    write_split(
+        test, [("Mau pesan 1 kg kak", "pemesanan"), ("Selamat siang", "sapaan")]
+    )
+    with pytest.raises(ValueError, match="overlap"):
+        load_intent_splits(train, test)
+
+
+def test_model_evaluation_accepts_the_provisional_dataset_label(tmp_path):
+    train, test = tmp_path / "train.csv", tmp_path / "test.csv"
+    train_rows = [("Berapa harga?", "tanya_produk"), ("Halo", "lainnya")]
+    test_rows = [("Selamat siang", "lainnya"), ("Harganya berapa?", "tanya_produk")]
+    write_split(train, train_rows)
+    write_split(test, test_rows)
+    assert load_intent_splits(train, test) == (train_rows, test_rows)

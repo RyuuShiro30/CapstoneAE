@@ -10,7 +10,7 @@ CapstoneAE membantu pembeli gurame konsumsi mendapatkan informasi dan melanjutka
 | --- | --- | --- |
 | API | `app/main.py`, `app/routers/chat.py`, `app/schemas.py` | Komposisi, CORS, validasi Pydantic, serialisasi, HTTP status dan error envelope. |
 | Application | `app/services/chat_service.py` | Orkestrasi satu giliran, pemetaan intent ke kontrak publik, respons aman, dan handoff. |
-| AI | `app/ai/intent.py`, `app/ai/text.py`, `app/ai/guardrails.py` | Kontrak classifier, normalisasi, fallback aturan, dan pemeriksaan permintaan sensitif. |
+| AI | `app/ai/intent.py`, `app/preprocessing.py`, `app/ai/text.py`, `app/ai/guardrails.py` | Kontrak classifier, preprocessing bahasa kasual, fallback aturan, dan pemeriksaan permintaan sensitif. |
 | AI integration | `app/ai/generation.py` | Kontrak provider dan retrieval serta pemisahan peran prompt. |
 | Data integration | `app/integrations/catalog.py` | Kontrak baca katalog publik dan validasi harga serta ketersediaan. |
 | Configuration | `app/core/config.py` | Pengaturan lingkungan, ambang confidence, dan timeout. |
@@ -20,10 +20,10 @@ Router bergantung pada layanan aplikasi. Layanan bergantung pada kontrak Python 
 ## Request Flow
 
 1. FastAPI memvalidasi `session_id` dan `message`. Pesan dibatasi 1.000 karakter. `session_id` tetap diterima untuk kompatibilitas.
-2. Guardrail memeriksa permintaan informasi internal dan pola pengambilalihan instruksi sebelum memanggil classifier atau adapter.
-3. Classifier dipakai ulang dan berjalan dalam worker thread agar inferensi sinkron tidak menahan event loop. Prediksi model dengan confidence rendah meminta klarifikasi. Fallback aturan memakai confidence `None`.
+2. Guardrail memeriksa pesan asli untuk permintaan informasi internal dan pola pengambilalihan instruksi sebelum memanggil classifier atau adapter.
+3. Classifier berjalan dalam worker thread agar inferensi sinkron tidak menahan event loop. Fallback aturan memakai `clean_text` dari `app/preprocessing.py`, sama seperti pipeline TF-IDF. Fungsi ini menormalkan singkatan, satuan, dan bahasa kasual. Fallback aturan memakai confidence `None`. Prediksi model dengan confidence rendah meminta klarifikasi.
 4. Harga dan stok berasal dari `CatalogReader` jika tersedia. Harga memakai rupiah per kilogram. Nilai yang belum diketahui mendapat respons keterbatasan dan handoff. Katalog membedakan stok habis dari stok yang belum diketahui.
-5. Pertanyaan produk dapat memakai `KnowledgeRetriever` untuk memilih ID fakta yang telah disetujui. Output `GenerationProvider` dipakai jika menunjuk salah satu ID yang tersedia. Teks yang dikirim ke pelanggan berasal dari daftar terverifikasi.
+5. Pertanyaan produk memakai teks asli untuk `KnowledgeRetriever` dan prompt. Output `GenerationProvider` dipakai jika menunjuk salah satu ID fakta yang tersedia. Teks yang dikirim ke pelanggan berasal dari daftar terverifikasi.
 6. Pemesanan dan keluhan mengembalikan petunjuk WhatsApp. Integrasi Full-stack bertanggung jawab atas tautan Click-to-Chat yang disetujui UMKM.
 7. Layanan mengembalikan satu `ChatResult`. Router mempertahankan tiga nilai intent publik API v1.
 

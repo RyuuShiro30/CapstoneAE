@@ -22,8 +22,12 @@ from app.services.chat_service import ChatService
         ("Mau order gurame", Intent.ORDER),
         ("Mau komplain pesanan", Intent.COMPLAINT),
         ("Halo, kak!", Intent.GREETING),
+        ("Halo, gan!", Intent.GREETING),
+        ("Assalamualaikum Mang Ujang", Intent.GREETING),
+        ("Harga ikan guraminya brp?", Intent.PRICE),
         ("Gurame untuk konsumsi seperti apa?", Intent.PRODUCT),
         ("Kapan jam buka?", Intent.POLICY),
+        ("Ongkirnya berapa?", Intent.POLICY),
         ("Berapa harga laptop?", Intent.OUT_OF_SCOPE),
     ],
 )
@@ -97,13 +101,16 @@ def test_retrieval_and_generation_only_select_approved_replies():
     retriever.retrieve_reply_ids.return_value = ["unit", "invented"]
     generation.generate.return_value = "unit"
     service = ChatService(Settings(), retriever=retriever, generation=generation)
-    result = asyncio.run(service.respond("Gurame dijual dengan satuan apa?"))
+    question = "Gurame dijual dengan satuan apa?"
+    result = asyncio.run(service.respond(question))
     assert (
         result.reply
         == "Penjualan ikan gurame dihitung berdasarkan berat dalam kilogram."
     )
     prompt = generation.generate.await_args.args[0]
-    assert set(json.loads(prompt.user)["approved_replies"]) == {"unit"}
+    payload = json.loads(prompt.user)
+    assert set(payload["approved_replies"]) == {"unit"}
+    assert payload["question"] == question
 
 
 @pytest.mark.parametrize(
