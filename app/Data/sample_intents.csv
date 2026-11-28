@@ -1,0 +1,25 @@
+text,intent
+"Bang, harga gurame per kilo berapa sekarang?",tanya_produk
+"Ikan gurame konsumsi ukuran besar ready gak min?",tanya_produk
+"1 kg gurame biasanya isi berapa ekor ya?",tanya_produk
+"Lokasi kolam mang ujang di daerah mana?",tanya_produk
+"Bisa COD sekitar kecamatan sini gak? Ongkirnya berapa?",tanya_produk
+"Stok gurame buat acara bakar-bakar minggu ini masih aman?",tanya_produk
+"Mau pesen gurame 3 kg buat besok pagi ya min",pemesanan
+"Cara order ikan guramenya gimana bang?",pemesanan
+"Saya mau beli 5 kilo dikirim ke rumah sore ini bisa?",pemesanan
+"Booking 2 kg gurame ukuran sedang, ambil langsung ke lokasi",pemesanan
+"Pesen buat acara syukuran 10 kg hari sabtu",pemesanan
+"Min mau order gurame lagi kayak kemarin 2 kg",pemesanan
+"Bang ikan yang dikirim tadi siang kok kurang segar ya",keluhan
+"Pesanan saya telat banget sampainya padahal udah ditunggu",keluhan
+"Timbangannya pas dicek ulang di rumah agak kurang min",keluhan
+"Komplain bang, plastiknya bocor pas di jalan tadi",keluhan
+"Ikan yang datang ukurannya kecil-kecil tidak sesuai janji",keluhan
+"Admin responnya lama banget padahal mau komplain pesanan",keluhan
+"Halo selamat pagi admin",lainnya
+"Makasih banyak ya bang ikannya mantap",lainnya
+"Oke siap ditunggu infonya",lainnya
+"Assalamualaikum mang ujang",lainnya
+"Siap terima kasih infonya min",lainnya
+"Halo permisi mau tanya dulu",lainnya
