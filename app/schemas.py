@@ -1,10 +1,16 @@
 from typing import Optional
+
 from pydantic import BaseModel, Field, field_validator
 
 
 class ChatRequest(BaseModel):
     session_id: str = Field(..., min_length=1, examples=["user-123"])
-    message: str = Field(..., min_length=1, max_length=1000, examples=["Halo, harga gurame per kg berapa?"])
+    message: str = Field(
+        ...,
+        min_length=1,
+        max_length=1000,
+        examples=["Halo, harga gurame per kg berapa?"],
+    )
 
     @field_validator("message")
     @classmethod
@@ -18,7 +24,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     status: str = "success"
     intent: str = Field(..., examples=["tanya_produk"])
-    reply: str = Field(..., examples=["Halo! Harga ikan gurame konsumsi saat ini Rp35.000/kg."])
+    reply: str = Field(..., examples=["Ikan gurame konsumsi dijual per kilogram."])
     redirect_whatsapp: bool = False
 
 
