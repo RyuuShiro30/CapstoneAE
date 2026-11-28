@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from app.schemas import ChatRequest, ChatResponse, ErrorResponse
+from app.preprocessing import clean_text
 
 router = APIRouter(prefix="/api/v1", tags=["Chatbot"])
 
@@ -14,16 +15,16 @@ router = APIRouter(prefix="/api/v1", tags=["Chatbot"])
 )
 async def chat_endpoint(payload: ChatRequest):
     try:
-        user_text = payload.message.lower()
+        user_text = clean_text(payload.message)
 
-        if "keluhan" in user_text or "komplain" in user_text:
+        if "keluhan" in user_text:
             return ChatResponse(
                 intent="keluhan",
                 reply="Mohon maaf atas ketidaknyamanannya. Pesan Anda akan diteruskan langsung kepada pengelola Gurami Konsumsi Mang Ujang.",
                 redirect_whatsapp=True,
             )
 
-        if "pesan" in user_text or "beli" in user_text or "order" in user_text:
+        if "pesan" in user_text or "beli" in user_text:
             return ChatResponse(
                 intent="pemesanan",
                 reply="Baik, untuk pemesanan ikan gurame silakan lanjutkan konfirmasi jumlah kg dan metode COD/ambil di lokasi melalui WhatsApp kami.",
