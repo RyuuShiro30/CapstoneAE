@@ -116,7 +116,7 @@ def clean_text(text: Optional[str]) -> str:
     normalized = re.sub(r"[^a-z0-9\s]", " ", normalized)
 
     # 5. Pangkas pengulangan huruf lebih dari 2 kali (contoh: 'readyyyy' -> 'ready')
-    normalized = re.sub(r"(.)\1{2,}", r"\1", normalized)
+    normalized = re.sub(r"([a-z])\1{2,}", r"\1", normalized)
 
     # 6. Tokenisasi berbasis spasi & normalisasi slang
     tokens = normalized.split()

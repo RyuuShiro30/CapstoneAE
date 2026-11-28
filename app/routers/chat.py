@@ -1,8 +1,17 @@
-from fastapi import APIRouter, HTTPException, status
-from app.schemas import ChatRequest, ChatResponse, ErrorResponse
-from app.preprocessing import clean_text
+import logging
+from typing import Annotated
 
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+
+from app.schemas import ChatRequest, ChatResponse, ErrorResponse
+from app.services.chat_service import ChatService
+
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["Chatbot"])
+
+
+async def get_chat_service(request: Request) -> ChatService:
+    return request.app.state.chat_service
 
 
 @router.post(
@@ -13,36 +22,28 @@ router = APIRouter(prefix="/api/v1", tags=["Chatbot"])
         503: {"model": ErrorResponse},
     },
 )
-async def chat_endpoint(payload: ChatRequest):
+async def chat_endpoint(
+    payload: ChatRequest,
+    chat_service: Annotated[ChatService, Depends(get_chat_service)],
+) -> ChatResponse:
     try:
-        user_text = clean_text(payload.message)
-
-        if "keluhan" in user_text:
-            return ChatResponse(
-                intent="keluhan",
-                reply="Mohon maaf atas ketidaknyamanannya. Pesan Anda akan diteruskan langsung kepada pengelola Gurami Konsumsi Mang Ujang.",
-                redirect_whatsapp=True,
-            )
-
-        if "pesan" in user_text or "beli" in user_text:
-            return ChatResponse(
-                intent="pemesanan",
-                reply="Baik, untuk pemesanan ikan gurame silakan lanjutkan konfirmasi jumlah kg dan metode COD/ambil di lokasi melalui WhatsApp kami.",
-                redirect_whatsapp=True,
-            )
-
+        result = await chat_service.respond(payload.message)
         return ChatResponse(
-            intent="tanya_produk",
-            reply="Halo! Selamat datang di Gurami Konsumsi Mang Ujang. Kami menyediakan ikan gurame konsumsi ukuran besar dijual per kilogram. Ada yang bisa dibantu?",
-            redirect_whatsapp=False,
+            intent=result.intent,
+            reply=result.reply,
+            redirect_whatsapp=result.redirect_whatsapp,
         )
     except Exception as exc:
+        logger.error("Chat request failed (%s)", type(exc).__name__)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
                 "status": "error",
                 "error_code": "AI_SERVICE_UNAVAILABLE",
-                "message": "Maaf, layanan asisten AI sedang sibuk. Silakan coba beberapa saat lagi atau hubungi pengelola via WhatsApp.",
-                "detail": str(exc),
+                "message": (
+                    "Maaf, layanan asisten AI sedang sibuk. Silakan coba beberapa saat "
+                    "lagi atau hubungi pengelola via WhatsApp."
+                ),
+                "detail": "Layanan chat sementara tidak tersedia.",
             },
-        )
+        ) from None

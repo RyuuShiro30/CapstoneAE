@@ -1,4 +1,5 @@
 import unittest
+
 from app.preprocessing import clean_text, preprocess_batch
 
 
@@ -18,6 +19,9 @@ class TestPreprocessing(unittest.TestCase):
 
     def test_numbers_only(self):
         self.assertEqual(clean_text("12345 67890"), "12345 67890")
+
+    def test_quantity_preserves_repeated_digits(self):
+        self.assertEqual(clean_text("Mau psn 1000kg"), "mau pesan 1000 kg")
 
     def test_url_and_mention_removal(self):
         raw = "Cek katalog https://contoh.com @mangujang #gurame mantap!"
